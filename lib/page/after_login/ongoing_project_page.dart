@@ -11,7 +11,7 @@ class _OnGoingPageState extends State<OnGoingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Color(0xff242424),
       body: Container(
         padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
         child: Column(
@@ -22,7 +22,10 @@ class _OnGoingPageState extends State<OnGoingPage> {
               padding: const EdgeInsets.only(left: 10),
               child: Text(
                 '참여중',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
                 textAlign: TextAlign.start,
               ),
             ),

@@ -4,7 +4,7 @@ class User {
   String name;
   String phone;
   String nickname;
-  DateTime birthday; // 디비 설계 TimeStamp type
+  String birthday; // 디비 설계 TimeStamp type
   int age;
   String mbti;
   String license1;
@@ -66,5 +66,5 @@ User example = User(
     name: "박수빈",
     phone: "010-9663-6696",
     nickname: "bymine",
-    birthday: DateTime(1997, 7, 23),
+    birthday: DateTime(1997, 7, 23).toIso8601String(),
     age: 25);
