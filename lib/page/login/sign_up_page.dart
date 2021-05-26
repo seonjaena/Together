@@ -193,7 +193,6 @@ class _SignUpPageState extends State<SignUpPage> {
         style: ElevatedButton.styleFrom(primary: Colors.green),
         onPressed: () async {
           if (_formKey.currentState!.validate()) {
-            // 가입 하기 함수 구현할것
             User user = User(
                 email: emailController.text,
                 password: passwordController.text,
