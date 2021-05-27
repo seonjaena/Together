@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:together/model/user.dart';
 import 'package:http/http.dart' as http;
+import 'package:together/widget/email_form.dart';
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -10,17 +11,22 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
+  String _selectedValue = '선택하세요';
+  final emailList = ['선택하세요', 'naver.com', 'hanmail.net'];
   final _formKey = GlobalKey<FormState>();
-  final nameController = TextEditingController(text: "박수빈");
-  final nicknameController = TextEditingController(text: "bymine");
-  final emailController = TextEditingController(text: "frfr0723@gmail.com");
-  final passwordController = TextEditingController(text: "abcd1234");
-  final repasswordController = TextEditingController(text: "abcd1234");
-  final phoneController = TextEditingController(text: "010-9663-6696");
+  final _emailformKey = GlobalKey<FormState>();
+  final _nicknameformKey = GlobalKey<FormState>();
+
+  int nicknameCheckFlag = 0; // 0 일경우 중복확인 체크하세요  1일경우 사용가능 2 이미 존재하는 아이디
+
+  final nameController = TextEditingController();
+  final nicknameController = TextEditingController();
+  final passwordController = TextEditingController();
+  final repasswordController = TextEditingController();
+  final phoneController = TextEditingController();
   final yearController = TextEditingController(text: "1997");
   final monthController = TextEditingController(text: "7");
   final dayController = TextEditingController(text: "23");
-  final ageController = TextEditingController(text: "25");
   DateTime birth = DateTime.now();
   @override
   Widget build(BuildContext context) {
@@ -32,111 +38,61 @@ class _SignUpPageState extends State<SignUpPage> {
       body: SingleChildScrollView(
         child: Container(
           padding: EdgeInsets.only(top: 50),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                '회원가입',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(
-                height: height * 0.048,
-              ),
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    buildHearder(
-                      //인증 기능
-                      header: "이메일",
-                      child: buildFormField("이메일", emailController, false),
-                    ),
-                    buildHearder(
-                      header: "비밀번호",
-                      child: buildFormField("비밀번호", passwordController, true),
-                    ),
-                    buildHearder(
-                      // 비밀번호 텍스트 일치할것, 영문 숫자 특수기호  길이 제한 추가
-                      header: "비밀번호 재확인",
-                      child: buildFormField("비밀번호", repasswordController, true),
-                    ),
-                    buildHearder(
-                      header: "이름",
-                      child: buildFormField("이름", nameController, false),
-                    ),
-                    buildHearder(
-                      //중복확인
-                      header: "닉네임",
-                      child: buildFormField("닉네임", nicknameController, false),
-                    ),
-                    buildHearder(
-                      //중복확인
-                      header: "휴대전화",
-                      child: buildFormField("휴대전화", phoneController, false),
-                    ),
-                    buildHearder(
-                      header: "생년월일",
-                      child: Container(
-                        padding: EdgeInsets.symmetric(
-                          vertical: 10,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: width * 0.3,
-                              child: TextFormField(
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  hintText: "년(4자)",
-                                ),
-                                controller: yearController,
-                              ),
-                            ),
-                            SizedBox(
-                              width: width * 0.032,
-                            ),
-                            Container(
-                              width: width * 0.26,
-                              child: TextFormField(
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  hintText: "월",
-                                ),
-                                controller: monthController,
-                              ),
-                            ),
-                            SizedBox(
-                              width: width * 0.032,
-                            ),
-                            Container(
-                              width: width * 0.26,
-                              child: TextFormField(
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  border: OutlineInputBorder(),
-                                  hintText: "일",
-                                ),
-                                controller: dayController,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    buildHearder(
-                      header: "나이",
-                      child: buildFormField("나이", ageController, false),
-                    ),
-                  ],
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Text(
+                  '회원가입',
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                 ),
-              ),
-              buildSignUpButton(width, height, context),
-              SizedBox(
-                height: height * 0.01,
-              )
-            ],
+                SizedBox(
+                  height: height * 0.048,
+                ),
+                SignUpEmailForm(),
+                buildHearderChek(
+                  header: "비밀번호",
+                  subtitle: "8~16자 영문, 숫자 특수기호를 입력하시요",
+                  child: buildPwForm("비밀번호", passwordController, true),
+                ),
+                buildHearder(
+                  header: "비밀번호 확인",
+                  child: buildRePwForm("비밀번호", repasswordController, true),
+                ),
+                buildHearder(
+                  header: "이름",
+                  child: buildFormField("이름", nameController, false),
+                ),
+                buildHearderDupCheck(
+                  //중복확인
+                  header: "닉네임",
+                  dupChecker: ElevatedButton(
+                      onPressed: () async {
+                        if (nicknameController.text == "bymine") {
+                          //
+                          setState(() {
+                            nicknameCheckFlag = 2;
+                          });
+                        } else {
+                          setState(() {
+                            nicknameCheckFlag = 3;
+                          });
+                        }
+                        print(nicknameCheckFlag);
+                      },
+                      child: Text("중복 확인")),
+                  child: buildcheckNickname("닉네임", nicknameController, false),
+                ),
+                buildHearderDupCheck(
+                  //중복확인
+                  header: "휴대전화",
+                  dupChecker:
+                      ElevatedButton(onPressed: () {}, child: Text("중복 확인")),
+                  child: buildFormField("휴대전화", phoneController, false),
+                ),
+                buildSignUpButton(width, height, context),
+              ],
+            ),
           ),
         ),
       ),
@@ -154,12 +110,105 @@ class _SignUpPageState extends State<SignUpPage> {
           border: OutlineInputBorder(),
         ),
         controller: controller,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         validator: (text) {
           if (text!.isEmpty) {
             return '${form}를 입력하세요';
           } else {
             return null;
           }
+        },
+        obscureText: visible,
+      ),
+    );
+  }
+
+  Container buildPwForm(
+      String form, TextEditingController controller, bool visible) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: 10,
+      ),
+      child: TextFormField(
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+        ),
+        controller: controller,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        validator: (text) {
+          if (text!.isEmpty) {
+            return "비밀번호를 입력하세요.";
+          }
+          if (text.length < 8) {
+            return '8자 이상 입력해 주세요';
+          } else {
+            return null;
+          }
+        },
+        obscureText: visible,
+      ),
+    );
+  }
+
+  Container buildRePwForm(
+      String form, TextEditingController controller, bool visible) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: 10,
+      ),
+      child: TextFormField(
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+        ),
+        controller: controller,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        validator: (text) {
+          if (text!.isEmpty) {
+            return "비밀번호를 입력하세요.";
+          }
+          print(passwordController.text);
+          if (text != passwordController.text) {
+            return '비밀번호가 일치하지 않습니다. 다시 입력하세요.';
+          } else {
+            return null;
+          }
+        },
+        obscureText: visible,
+      ),
+    );
+  }
+
+  Container buildcheckNickname(
+      String form, TextEditingController controller, bool visible) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        vertical: 10,
+      ),
+      child: TextFormField(
+        decoration: InputDecoration(
+          border: OutlineInputBorder(),
+          suffixIcon: Icon(
+            Icons.check,
+            color: nicknameCheckFlag == 3 ? Colors.green : Colors.red,
+          ),
+        ),
+        controller: controller,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        onChanged: (text) {
+          nicknameCheckFlag = 0;
+        },
+        validator: (text) {
+          if (text!.isNotEmpty && nicknameCheckFlag == 1) {
+            nicknameCheckFlag = 3;
+            return "사용가능한 닉네임입니다.";
+          } else if (text.isNotEmpty && nicknameCheckFlag == 2) {
+            return "이미 사용중이거나 탈퇴한 닉네임입니다.";
+          } else if (text.isNotEmpty && nicknameCheckFlag == 0) {
+            return "중복 체크하시오.";
+          } else if (text.isNotEmpty && nicknameCheckFlag == 3) {
+            return null;
+          } else
+            return "닉네임을 입력하세요";
         },
         obscureText: visible,
       ),
@@ -183,7 +232,55 @@ class _SignUpPageState extends State<SignUpPage> {
           ],
         ),
       );
+  Widget buildHearderChek({
+    required String header,
+    required String subtitle,
+    required Widget child,
+  }) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  header,
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(subtitle),
+              ],
+            ),
+            child
+          ],
+        ),
+      );
 
+  Widget buildHearderDupCheck({
+    required String header,
+    required Widget dupChecker,
+    required Widget child,
+  }) =>
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  header,
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                dupChecker,
+              ],
+            ),
+            child
+          ],
+        ),
+      );
   Container buildSignUpButton(
       double width, double height, BuildContext context) {
     return Container(
@@ -193,20 +290,7 @@ class _SignUpPageState extends State<SignUpPage> {
         style: ElevatedButton.styleFrom(primary: Colors.green),
         onPressed: () async {
           if (_formKey.currentState!.validate()) {
-            User user = User(
-                email: emailController.text,
-                password: passwordController.text,
-                name: nameController.text,
-                phone: phoneController.text,
-                nickname: nicknameController.text,
-                birthday: DateTime(
-                  int.parse(yearController.text),
-                  int.parse(monthController.text),
-                  int.parse(dayController.text),
-                ).toIso8601String(),
-                age: int.parse(ageController.text));
-            print(jsonEncode(user.toJson()));
-            signUpUser(user);
+            Navigator.of(context).pop();
           }
         },
         child: Text(
@@ -215,12 +299,5 @@ class _SignUpPageState extends State<SignUpPage> {
         ),
       ),
     );
-  }
-
-  void signUpUser(User user) async {
-    final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/user/signup'),
-        headers: {'Content-Type': "application/json"},
-        body: jsonEncode(user.toJson()));
   }
 }
